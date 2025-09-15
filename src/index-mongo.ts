@@ -14,7 +14,7 @@ const app = express()
 app.use(express.json())
 
 // criando uma rota para acesso pelo navegador
-app.get('/produtos', async (req, res) => {
+app.get('/produtos', async (_req, res) => {
    const produtos = await db.collection('produtos').find().toArray()
     res.json(produtos)
 })
