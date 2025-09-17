@@ -1,28 +1,32 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import 'dotenv/config'
-import {MongoClient} from 'mongodb'
+import { MongoClient } from 'mongodb'
 
-async function startServer() {
 const client = new MongoClient(process.env.MONGO_URI!)
 await client.connect()
-const db = client.db(process.env.MONGO_DB)
-
-
+const db = client.db(process.env.MONGO_DB!)
 
 const app = express()
-//explique o que esse middleware faz com que o express faça o perse do body da requisição para json 
+// Esse middleware faz com que o express faça o parse do body da requisição para json 
 app.use(express.json())
 
 // criando uma rota para acesso pelo navegador
-app.get('/produtos', async (_req, res) => {
-   const produtos = await db.collection('produtos').find().toArray()
-    res.json(produtos)
+app.get('/produtos', async (req: Request, res: Response) => {
+    const produtos = await db.collection('produtos').find().toArray()
+    res.status(200).json(produtos)
 })
 
-// Criando o servidor na porta 8000
-app.listen(8000, () => {
-    console.log('Server is running on port 8000');
-});
-}
+app.post('/produtos', async (req: Request, res: Response) => {
+    const { nome, preco, urlfoto, descricao } = req.body
+    if (!nome || !preco || !urlfoto || !descricao)
+        return res.status(400).json({ msg: 'Dados incompletos' })
 
-startServer()
+    const produto = { nome, preco, urlfoto, descricao }
+    const resultado = await db.collection('produtos').insertOne(produto)
+    res.status(201).json({ ...produto, _id: resultado.insertedId })
+})
+
+// Criando o servidor na porta 8000 com o express
+app.listen(8000, () => {
+    console.log('Server is running on port 8000')
+})
